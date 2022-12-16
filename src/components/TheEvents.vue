@@ -3,12 +3,10 @@ import { useWebSocket, whenever } from '@vueuse/core'
 import { computed, shallowReactive, watch } from 'vue'
 
 const url = new URL(import.meta.url)
-const base =
+const wsUrl =
   url.protocol.replace(/^http(s)?/, 'ws$1') + url.host + '/api/events'
 
-// const base =
-
-const { data, status } = useWebSocket(base, {
+const { data, status } = useWebSocket(wsUrl, {
   immediate: true,
   autoReconnect: {
     retries: Infinity,
@@ -22,7 +20,8 @@ const isActive = computed(() => status.value === 'OPEN')
 const isConnecting = computed(() => status.value === 'CONNECTING')
 
 whenever(data, (bit) => {
-  history.push(bit)
+  history.push(JSON.parse(bit))
+  data.value = null
 })
 </script>
 
