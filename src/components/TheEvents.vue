@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useWebSocket, whenever } from '@vueuse/core'
-import { computed, shallowReactive, watch } from 'vue'
+import { computed, shallowReactive } from 'vue'
+import { DomainEvent } from '../types/events'
+import FormatTimestamp from './FormatTimestamp'
 
 const url = new URL(import.meta.url)
 const wsUrl =
@@ -13,20 +15,44 @@ const { data, status } = useWebSocket(wsUrl, {
   },
 })
 
-const history = shallowReactive<unknown[]>([])
+type ParsedEvent = (
+  | {
+      type: 'parsed'
+      event: DomainEvent
+    }
+  | { type: 'unidentified'; raw: unknown }
+) & {
+  timestamp: Date
+}
+
+const history = shallowReactive<ParsedEvent[]>([])
+
+const lastHistoryReversed = computed(() => {
+  const last = history.slice(-7)
+  last.reverse()
+  return last
+})
 
 const isActive = computed(() => status.value === 'OPEN')
 
 const isConnecting = computed(() => status.value === 'CONNECTING')
 
 whenever(data, (bit) => {
-  history.push(JSON.parse(bit))
+  const timestamp = new Date()
+
+  try {
+    const parsed: DomainEvent = JSON.parse(bit)
+    history.push({ type: 'parsed', event: parsed, timestamp })
+  } catch {
+    history.push({ type: 'unidentified', raw: bit, timestamp })
+  }
+
   data.value = null
 })
 </script>
 
 <template>
-  <VCard :loading="isConnecting">
+  <VCard :loading="isConnecting" elevation="4">
     <VCardTitle>
       Events
 
@@ -46,6 +72,26 @@ whenever(data, (bit) => {
 
     <VDivider />
 
-    <pre>{{ history }}</pre>
+    <VList>
+      <template v-if="!history.length">
+        <VListSubheader>No any events yet</VListSubheader>
+      </template>
+      <template v-for="x in lastHistoryReversed">
+        <template v-if="x.type === 'parsed'">
+          <VListItem :title="x.event.type">
+            <VListItemSubtitle>
+              <FormatTimestamp :value="x.timestamp" />
+            </VListItemSubtitle>
+          </VListItem>
+        </template>
+        <template v-else>
+          <VListItem title="Unidentified">
+            <VListItemSubtitle>
+              <code>{{ x.raw }}</code>
+            </VListItemSubtitle>
+          </VListItem>
+        </template>
+      </template>
+    </VList>
   </VCard>
 </template>

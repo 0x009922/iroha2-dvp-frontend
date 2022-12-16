@@ -1,23 +1,12 @@
 <script setup lang="ts">
-import { FunctionalComponent } from 'vue'
 import { Scenario } from '../types/scenario'
 import TheScenarioFormattedCurrency from './TheScenarioFormattedCurrency.vue'
 import Item from './TheScenarioFormattedItem.vue'
+import FormatTimestamp from './FormatTimestamp'
 
-const props = defineProps<{
+defineProps<{
   data: Scenario
 }>()
-
-const dateFormatter = Intl.DateTimeFormat('en-US', {
-  dateStyle: 'medium',
-  timeStyle: 'medium',
-})
-
-const FormatTimestamp: FunctionalComponent<{ value: string }> = (props) => {
-  const date = new Date(props.value)
-  const formatted = dateFormatter.format(date)
-  return formatted
-}
 </script>
 
 <template>

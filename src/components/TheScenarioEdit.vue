@@ -13,8 +13,6 @@ import PromiseStateSnackbar from './PromiseStateSnackbar.vue'
 
 const store = useScenarioStore()
 
-const mode = useLocalStorage<'view' | 'edit'>('the-scenario-tabs-model', 'view')
-
 const fileReadSnack = refAutoReset(false, 3500)
 
 const editableDebounced = ref('')
@@ -44,60 +42,37 @@ function onFileInput(ev: Event) {
 </script>
 
 <template>
-  <VCard :loading="store.loadingState.pending" elevation="4">
-    <VCardTitle> Scenario </VCardTitle>
+  <VCard elevation="4">
+    <VCardTitle> Edit Scenario </VCardTitle>
 
     <VDivider />
 
-    <VTabs v-model="mode" color="primary">
-      <VTab value="view">View</VTab>
-      <VTab value="edit">Edit</VTab>
-    </VTabs>
+    <div class="p-4">
+      <VTextarea
+        v-model="editableDebounced"
+        label="Editable JSON"
+        class="json-textarea"
+        auto-grow
+      />
 
-    <VWindow v-model="mode">
-      <VWindowItem value="view">
-        <div class="space-y-4">
-          <VAlert
-            type="error"
-            class="m-4"
-            v-if="store.loadingState.rejected"
-            title="Error"
-          >
-            Failed to load data from the backend &mdash;
-            {{ store.loadingState.rejected.reason }}
-          </VAlert>
-
-          <TheScenarioFormatted
-            v-if="store.loadingState.fulfilled?.value"
-            :data="store.loadingState.fulfilled.value"
-          />
-          <template v-else>
-            <div class="text-caption p-4">No content</div>
-          </template>
-        </div>
-      </VWindowItem>
-      <VWindowItem value="edit" class="p-4">
-        <VTextarea
-          v-model="editableDebounced"
-          label="Editable JSON"
-          class="json-textarea"
-          auto-grow
+      <div class="flex flex-col space-y-1">
+        <label for="upload-scenario" class="text-caption">
+          Load Scenario from a file
+        </label>
+        <input
+          id="upload-scenario"
+          type="file"
+          accept="application/json"
+          @input="onFileInput"
         />
-
-        <input type="file" accept="application/json" @input="onFileInput" />
-      </VWindowItem>
-    </VWindow>
+      </div>
+    </div>
 
     <VCardActions>
-      <VBtn variant="text" color="primary" @click="store.updateLoaded()">
-        Get current
-      </VBtn>
-      <VSpacer />
       <VBtn
-        :disabled="!store.isValidToSubmit"
+        :disabled="!store.isValidToSubmit || !store.isLocalDiffersFromRemote"
         :loading="store.updatingState?.pending"
         color="primary"
-        variant="elevated"
         @click="store.updateByLocal"
       >
         Upload
