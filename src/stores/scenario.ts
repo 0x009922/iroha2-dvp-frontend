@@ -7,7 +7,7 @@ import {
   PromiseStateAtomic,
   wheneverFulfilled,
 } from '@vue-kakuyaku/core'
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import fde from 'fast-deep-equal'
 import * as api from '../api'
@@ -19,6 +19,11 @@ function useRemoteScenario() {
 
   useErrorRetry(state, getScenario, { count: Infinity })
   const stale = useStaleState(state)
+
+  const lastLoadedAt = ref<null | Date>(null)
+  wheneverFulfilled(state, () => {
+    lastLoadedAt.value = new Date()
+  })
 
   const submit = useDeferredScope<PromiseStateAtomic<void>>()
 
@@ -38,6 +43,7 @@ function useRemoteScenario() {
 
   return {
     loadingState: stale,
+    lastLoadedAt,
     updatingState,
     updateScenario,
     updateLoaded: getScenario,
@@ -45,8 +51,13 @@ function useRemoteScenario() {
 }
 
 export const useScenarioStore = defineStore('scenario', () => {
-  const { loadingState, updatingState, updateScenario, updateLoaded } =
-    useRemoteScenario()
+  const {
+    loadingState,
+    updatingState,
+    updateScenario,
+    updateLoaded,
+    lastLoadedAt,
+  } = useRemoteScenario()
 
   const localScenario = useLocalStorage('local-scenario', '')
 
@@ -79,11 +90,16 @@ export const useScenarioStore = defineStore('scenario', () => {
     }
   )
 
+  const { run: runScenario, state: runScenarioState } = useTask(() =>
+    api.runScenario()
+  )
+
   function updateByLocal() {
     updateScenario(localScenario.value)
   }
 
   return {
+    lastLoadedAt,
     loadingState,
     updatingState,
     localScenario,
@@ -91,5 +107,7 @@ export const useScenarioStore = defineStore('scenario', () => {
     updateLoaded,
     isLocalDiffersFromRemote,
     isValidToSubmit,
+    runScenario,
+    runScenarioState,
   }
 })

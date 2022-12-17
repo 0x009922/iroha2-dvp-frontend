@@ -23,3 +23,7 @@ export async function putScenario(scenarioJson: string): Promise<void> {
       throw err
     })
 }
+
+export async function runScenario(): Promise<void> {
+  return Axios.post('/api/run-scenario', null).then(() => {})
+}
