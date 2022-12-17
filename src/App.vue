@@ -8,7 +8,7 @@ import TheEvents from './components/TheEvents.vue'
   <div class="container mx-auto p-20 space-y-6">
     <h1 class="text-h1">Iroha DVP</h1>
     <TheScenarioEdit />
-    <div class="grid md:grid-cols-2 gap-6">
+    <div class="grid lg:grid-cols-2 gap-6 items-start">
       <TheScenarioView />
       <TheEvents />
     </div>
