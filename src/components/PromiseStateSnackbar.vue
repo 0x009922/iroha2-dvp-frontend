@@ -18,7 +18,13 @@ watch(
   () => props.state,
   (state) => {
     if (state?.fulfilled) showFulfilled.value = true
-    else if (state?.rejected) showRejected.value = true
+    else if (state?.rejected) {
+      console.error(
+        `[PromiseStateSnackbar] extended rejection reason:`,
+        String(state.rejected.reason)
+      )
+      showRejected.value = true
+    }
   },
   { deep: true, immediate: true }
 )

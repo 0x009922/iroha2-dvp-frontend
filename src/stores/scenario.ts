@@ -7,21 +7,15 @@ import {
   PromiseStateAtomic,
   wheneverFulfilled,
 } from '@vue-kakuyaku/core'
-import { Scenario } from '../types/scenario'
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import fde from 'fast-deep-equal'
+import * as api from '../api'
 
 function useRemoteScenario() {
-  const { state, run: getScenario } = useTask(
-    async () => {
-      const scenario: Scenario | null = await fetch('/api/scenario').then((x) =>
-        x.status === 204 ? null : x.json()
-      )
-      return scenario
-    },
-    { immediate: true }
-  )
+  const { state, run: getScenario } = useTask(async () => api.getScenario(), {
+    immediate: true,
+  })
 
   useErrorRetry(state, getScenario, { count: Infinity })
   const stale = useStaleState(state)
@@ -30,18 +24,9 @@ function useRemoteScenario() {
 
   function updateScenario(json: string): void {
     submit.setup(() => {
-      const { state } = useTask(
-        async () => {
-          await fetch('/api/scenario', {
-            method: 'put',
-            body: json,
-            headers: { 'Content-Type': 'application/json' },
-          }).then((x) => {
-            if (!x.ok) throw new Error(String(x))
-          })
-        },
-        { immediate: true }
-      )
+      const { state } = useTask(async () => api.putScenario(json), {
+        immediate: true,
+      })
 
       wheneverFulfilled(state, getScenario)
 
