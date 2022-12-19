@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useWebSocket, whenever } from '@vueuse/core'
 import { computed, shallowReactive } from 'vue'
-import { DomainEvent } from '../types/events'
+import { DvpEvent } from '../types/events'
 import FormatTimestamp from './FormatTimestamp'
+import TxIdAndTimestamp from './TxIdAndTimestamp.vue'
+// import SAMPLE from '../events-sample'
 
 const url = new URL(import.meta.url)
 const wsUrl =
@@ -18,7 +20,7 @@ const { data, status } = useWebSocket(wsUrl, {
 type ParsedEvent = (
   | {
       type: 'parsed'
-      event: DomainEvent
+      event: DvpEvent
     }
   | { type: 'unidentified'; raw: unknown }
 ) & {
@@ -41,7 +43,7 @@ whenever(data, (bit) => {
   const timestamp = new Date()
 
   try {
-    const parsed: DomainEvent = JSON.parse(bit)
+    const parsed: DvpEvent = JSON.parse(bit)
     history.push({ type: 'parsed', event: parsed, timestamp })
   } catch {
     history.push({ type: 'unidentified', raw: bit, timestamp })
@@ -78,9 +80,88 @@ whenever(data, (bit) => {
       </template>
       <template v-for="x in lastHistoryReversed">
         <template v-if="x.type === 'parsed'">
-          <VListItem :title="x.event.type">
+          <VListItem v-if="x.event.type === 'ScenarioStarted'">
+            <template #prepend>
+              <VIcon icon="mdi-book-play" />
+            </template>
+
+            <VListItemTitle> Scenario started </VListItemTitle>
             <VListItemSubtitle>
-              <FormatTimestamp :value="x.timestamp" />
+              <TxIdAndTimestamp
+                :transaction-id="x.event.content.transaction_id"
+                :timestamp="x.timestamp"
+              />
+            </VListItemSubtitle>
+          </VListItem>
+
+          <VListItem v-else-if="x.event.type === 'ScenarioReachedCactus'">
+            <template #prepend>
+              <VIcon icon="mdi-cactus" />
+            </template>
+
+            <VListItemTitle> Scenario reached Cactus </VListItemTitle>
+
+            <VListItemSubtitle>
+              <TxIdAndTimestamp
+                :transaction-id="x.event.content.transaction_id"
+                :timestamp="x.timestamp"
+              />
+            </VListItemSubtitle>
+          </VListItem>
+
+          <VListItem v-else-if="x.event.type === 'CactusResponseReceived'">
+            <template #prepend>
+              <VIcon icon="mdi-cactus" color="green" />
+            </template>
+
+            <VListItemTitle> Cactus response is received </VListItemTitle>
+
+            <VListItemSubtitle>
+              <TxIdAndTimestamp
+                :transaction-id="x.event.content.transaction_id"
+                :timestamp="x.timestamp"
+              />
+            </VListItemSubtitle>
+          </VListItem>
+
+          <VListItem v-else-if="x.event.type === 'ScenarioFinished'">
+            <template #prepend>
+              <VIcon icon="mdi-book-check" color="green-darken-2" />
+            </template>
+
+            <VListItemTitle> Scenario is finished! </VListItemTitle>
+
+            <VListItemSubtitle>
+              <TxIdAndTimestamp
+                :transaction-id="x.event.content.transaction_id"
+                :timestamp="x.timestamp"
+              />
+            </VListItemSubtitle>
+          </VListItem>
+
+          <template v-else-if="x.event.type === 'Error'">
+            <VListItem v-if="x.event.content.type === 'NotEnoughMoney'">
+              <template #prepend>
+                <VIcon icon="mdi-close-circle" color="red" />
+              </template>
+
+              <VListItemTitle> Error - Not enough money </VListItemTitle>
+
+              <VListItemSubtitle>
+                <FormatTimestamp :value="x.timestamp" />
+              </VListItemSubtitle>
+            </VListItem>
+          </template>
+
+          <VListItem v-else-if="x.event.type === 'Message'">
+            <template #prepend>
+              <VIcon icon="mdi-receipt-text" />
+            </template>
+
+            <VListItemTitle> Message from the backend </VListItemTitle>
+
+            <VListItemSubtitle>
+              <FormatTimestamp :value="x.timestamp" />; {{ x.event.content }}
             </VListItemSubtitle>
           </VListItem>
         </template>

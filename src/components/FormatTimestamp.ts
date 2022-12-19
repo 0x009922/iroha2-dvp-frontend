@@ -1,7 +1,7 @@
 import { FunctionalComponent } from 'vue'
 
 const dateFormatter = Intl.DateTimeFormat('en-US', {
-  dateStyle: 'medium',
+  dateStyle: 'short',
   timeStyle: 'medium',
 })
 
