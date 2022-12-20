@@ -14,6 +14,10 @@ export type CurrencyToken = string
 
 export type Timestamp = string
 
+export type TriggerId = string
+
+export type TriggerStatus = 'Succeeded' | 'Failed'
+
 export interface Scenario {
   transaction_id: TransactionId
   direction: Direction
