@@ -4,6 +4,7 @@ import { computed, shallowReactive } from 'vue'
 import { DvpEvent } from '../types/events'
 import FormatTimestamp from './FormatTimestamp'
 import TxIdAndTimestamp from './TxIdAndTimestamp.vue'
+import TriggerIdAndTimestamp from './TriggerIdAndTimestamp.vue'
 // import SAMPLE from '../events-sample'
 
 const url = new URL(import.meta.url)
@@ -134,6 +135,20 @@ whenever(data, (bit) => {
             <VListItemSubtitle>
               <TxIdAndTimestamp
                 :transaction-id="x.event.content.transaction_id"
+                :timestamp="x.timestamp"
+              />
+            </VListItemSubtitle>
+          </VListItem>
+
+          <VListItem v-if="x.event.type === 'TriggerExecuted'">
+            <template #prepend>
+              <VIcon icon="mdi-book-play" />
+            </template>
+
+            <VListItemTitle> Trigger {{x.event.content.status}} </VListItemTitle>
+            <VListItemSubtitle>
+              <TriggerIdAndTimestamp
+                :trigger-id="x.event.content.trigger_id"
                 :timestamp="x.timestamp"
               />
             </VListItemSubtitle>
